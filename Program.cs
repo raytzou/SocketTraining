@@ -40,8 +40,8 @@ class MySocketServer
         listener.Bind(_ipEndPoint); // to associate the socket with the network address
         listener.Listen(100); // 100 => The maximum length of the pending connections queue
 
-        var handler = await listener.AcceptAsync();
-        await Console.Out.WriteLineAsync($"Server is hosting, port: {_ipEndPoint.Port}");
+        Console.WriteLine($"Server is hosting, port: {_ipEndPoint.Port}"); // update: print message first
+        var handler = await listener.AcceptAsync();// blocking call, program will handle until receiving data
 
         while (true)
         {
@@ -51,7 +51,7 @@ class MySocketServer
 
             Console.WriteLine($"Server side received message: {decoder}");
 
-            var echo = $"Server received a message: {decoder}";
+            var echo = $"Server got message, acknowledgment.";
             
             if (decoder == "end")
                 echo = "Shutting the server down...";
