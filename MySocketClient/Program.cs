@@ -44,6 +44,8 @@ class MySocketClient
             Console.Write("\nClient Type: ");
             string msg = Console.ReadLine();
 
+            if (string.IsNullOrEmpty(msg)) continue;
+
             #region Sender
             var msgBytes = Encoding.UTF8.GetBytes(msg);
             var sender = await client.SendAsync(msgBytes, SocketFlags.None); // send message, return how many bytes have been sent
