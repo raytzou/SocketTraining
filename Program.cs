@@ -45,21 +45,29 @@ class MySocketServer
 
         while (true)
         {
-            var buffer = new byte[32]; // buffer for storing message
-            var receiver = await handler.ReceiveAsync(buffer, SocketFlags.None); // receive message to buffer, and get bytes size
-            var decoder = Encoding.UTF8.GetString(buffer, 0, receiver);
+            try
+            {
+                var buffer = new byte[32]; // buffer for storing message
+                var receiver = await handler.ReceiveAsync(buffer, SocketFlags.None); // receive message to buffer, and get bytes size
+                var decoder = Encoding.UTF8.GetString(buffer, 0, receiver);
 
-            Console.WriteLine($"Server side received message: {decoder}");
+                Console.WriteLine($"Server side received message: {decoder}");
 
-            var echo = $"Server got message, acknowledgment.";
-            
-            if (decoder == "end")
-                echo = "Shutting the server down...";
+                if (decoder == "end")
+                {
+                    Console.WriteLine("Shutting the server down...");
+                    break;
+                }
 
-            var echoByte = Encoding.UTF8.GetBytes(echo);
-            await handler.SendAsync(echoByte, 0); // sender, server ack
-
-            if (decoder == "end") break;
+                var echo = $"Server got message, acknowledgment.";
+                var echoByte = Encoding.UTF8.GetBytes(echo);
+                await handler.SendAsync(echoByte, 0); // sender, server ack
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                // break; // don't break here, but using Exception Message to notify that client has exited
+            }
         }
 
     }
