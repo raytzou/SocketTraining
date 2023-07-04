@@ -58,12 +58,6 @@ class MySocketServer
                 else
                     Console.WriteLine($"Server side received message: {decoder}");
 
-                /*if (decoder == "end") // comment the if situation, shutdown server from client side is too dangerous and stupid
-                {
-                    Console.WriteLine("Shutting the server down...");
-                    break;
-                }*/
-
                 var echo = $"Server got message, acknowledgment.";
                 var echoByte = Encoding.UTF8.GetBytes(echo);
                 await handler.SendAsync(echoByte, 0); // sender, server ack
