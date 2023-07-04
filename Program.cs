@@ -41,23 +41,28 @@ class MySocketServer
         listener.Listen(100); // 100 => The maximum length of the pending connections queue
 
         Console.WriteLine($"Server is hosting, port: {_ipEndPoint.Port}"); // update: print message first
-        var handler = await listener.AcceptAsync();// blocking call, program will handle until receiving data
 
         while (true)
         {
+            var handler = await listener.AcceptAsync(); // blocking call, program will handle here until receiving data
+
             try
             {
-                var buffer = new byte[32]; // buffer for storing message
+                var buffer = new byte[512]; // buffer for storing message, 32 is too short
                 var receiver = await handler.ReceiveAsync(buffer, SocketFlags.None); // receive message to buffer, and get bytes size
-                var decoder = Encoding.UTF8.GetString(buffer, 0, receiver);
+                var decoder = Encoding.UTF8.GetString(buffer, 0, receiver); // format => Username$message$IP (cannot use colon, if client's IP is IPv6)
+                var message = decoder.Split("$");
 
-                Console.WriteLine($"Server side received message: {decoder}");
+                if (message.Length == 3)
+                    Console.WriteLine($"msg: {message[1]}, from: {message[0]}, IP: {message[2]}");
+                else
+                    Console.WriteLine($"Server side received message: {decoder}");
 
-                if (decoder == "end")
+                /*if (decoder == "end") // comment the if situation, shutdown server from client side is too dangerous and stupid
                 {
                     Console.WriteLine("Shutting the server down...");
                     break;
-                }
+                }*/
 
                 var echo = $"Server got message, acknowledgment.";
                 var echoByte = Encoding.UTF8.GetBytes(echo);
