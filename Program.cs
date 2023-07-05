@@ -64,8 +64,13 @@ class MySocketServer
             }
             catch (Exception ex)
             {
+<<<<<<< HEAD
                 //Console.WriteLine(ex.Message);
                 // My handler don't block that means if client disconnected, server side would get spammed Socket Exception message 
+=======
+                Console.WriteLine(DateTime.Now + " " + ex.Message);
+                // break; // don't break here, but using Exception Message to notify that client has exited
+>>>>>>> 309a599c19b626ab21d8ef090e95d9748604a18e
             }
         }
 
