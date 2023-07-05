@@ -64,7 +64,7 @@ class MySocketServer
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(DateTime.Now + " " + ex.Message);
                 // break; // don't break here, but using Exception Message to notify that client has exited
             }
         }
