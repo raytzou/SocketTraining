@@ -41,11 +41,11 @@ class MySocketServer
         listener.Listen(100); // 100 => The maximum length of the pending connections queue
 
         Console.WriteLine($"Server is hosting, port: {_ipEndPoint.Port}"); // update: print message first
+        //listener.Blocking = false; // fuck it, just don't block all the time
+        var handler = await listener.AcceptAsync(); // blocking call, program will handle here until receiving data
 
         while (true)
-        {
-            var handler = await listener.AcceptAsync(); // blocking call, program will handle here until receiving data
-
+        {   
             try
             {
                 var buffer = new byte[512]; // buffer for storing message, 32 is too short
@@ -54,9 +54,9 @@ class MySocketServer
                 var message = decoder.Split("$");
 
                 if (message.Length == 3)
-                    Console.WriteLine($"msg: {message[1]}, from: {message[0]}, IP: {message[2]}");
+                    Console.WriteLine($"msg: {message[1]}, from: {message[0]}, IP: {message[2]}, time: {DateTime.Now}");
                 else
-                    Console.WriteLine($"Server side received message: {decoder}");
+                    Console.WriteLine($"Server side received message: {decoder}, time: {DateTime.UtcNow}");
 
                 var echo = $"Server got message, acknowledgment.";
                 var echoByte = Encoding.UTF8.GetBytes(echo);
@@ -64,8 +64,8 @@ class MySocketServer
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                // break; // don't break here, but using Exception Message to notify that client has exited
+                //Console.WriteLine(ex.Message);
+                // My handler don't block that means if client disconnected, server side would get spammed Socket Exception message 
             }
         }
 
