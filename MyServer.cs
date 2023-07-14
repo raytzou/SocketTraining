@@ -1,5 +1,7 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 class MyServer
@@ -38,7 +40,8 @@ class MyTCPListener
         
         Thread fork = new(ClientHandle);
         fork.Start();
-        
+
+
         while (true)
         {
             var client = listener.AcceptTcpClient();
@@ -65,6 +68,7 @@ class MyTCPListener
                         ServerAcknowledge(client);
                     }
                 }
+
             }
         }
     }
@@ -73,17 +77,21 @@ class MyTCPListener
     {
         try
         {
-            NetworkStream stream = client.GetStream();
-            var buffer = new byte[512];
-            var receiver = stream.Read(buffer);
-            var decoder = Encoding.UTF8.GetString(buffer);
+            if (client.Connected)
+            {
+                NetworkStream stream = client.GetStream();
+                var buffer = new byte[512];
+                var receiver = stream.Read(buffer);
+                var decoder = Encoding.UTF8.GetString(buffer);
+                var msgArray = decoder.Split("$");
 
-            Console.WriteLine($"{DateTime.Now} {decoder}");
-            SendMessage(decoder, client);
+                Console.WriteLine($"{DateTime.Now} {msgArray[0]} said: {msgArray[1]}, from {msgArray[2]}");
+                SendMessage(decoder, client);
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"{DateTime.Now} {ex.Message}");
+            Console.WriteLine($"{DateTime.Now} ReadError({new StackFrame(0, true).GetFileLineNumber()}): {ex.Message}");
         }
     }
 
@@ -94,14 +102,27 @@ class MyTCPListener
     /// <param name="theClient">TcpClient: The message sender</param>
     private static void SendMessage(string message, TcpClient theClient)
     {
-        foreach(var client in _clientList)
+        foreach (var client in _clientList)
         {
-            if (client == theClient) continue;
+            if (client == theClient || !client.Connected) continue;
 
-            NetworkStream stream = client.GetStream();
-            var msgBytes = Encoding.UTF8.GetBytes(MessageCategory.Msg + "$" + message);
-            
-            stream.Write(msgBytes, 0, msgBytes.Length);
+            try
+            {
+                NetworkStream stream = client.GetStream();
+                if (stream.CanWrite)  // need to fix if client is lost
+                {
+                    Console.WriteLine("Server sending");
+                    var msgBytes = Encoding.UTF8.GetBytes(MessageCategory.Msg + "$" + message);
+
+                    stream.Write(msgBytes, 0, msgBytes.Length);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"{DateTime.Now} SendError({new StackFrame(0, true).GetFileLineNumber()}): {ex.Message}");
+                //client.GetStream().Close();
+                client.Close(); // close the client, next round will not communicate with it
+            }
         }
     }
 

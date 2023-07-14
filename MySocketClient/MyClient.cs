@@ -14,15 +14,15 @@ class MyClient
 
 class MySocketClient
 {
-    private readonly IPHostEntry _ipHostInfo;
-    private readonly IPAddress _ipAddress;
+    //private readonly IPHostEntry _ipHostInfo;
+    //private readonly IPAddress _ipAddress;
     private readonly IPEndPoint _ipEndPoint;
 
     public MySocketClient()
     {
-        _ipHostInfo = Dns.GetHostEntry("127.0.0.1");
-        _ipAddress = _ipHostInfo.AddressList[0];
-        _ipEndPoint = new(_ipAddress, 8787);
+        //_ipHostInfo = Dns.GetHostEntry("127.0.0.1");
+        //_ipAddress = _ipHostInfo.AddressList[0];
+        _ipEndPoint = new(IPAddress.Parse("127.0.0.1"), 8787);
     }
 
     /// <summary>
@@ -33,7 +33,7 @@ class MySocketClient
     {
         using Socket client = new(_ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp); // claim a Socket client, use TCP protocol
 
-        Console.WriteLine("Connect to " + _ipAddress.ToString());
+        Console.WriteLine("Connect to " + _ipEndPoint.Address);
         Console.WriteLine("Please Enter your name: ");
 
         var name = Console.ReadLine();
@@ -59,13 +59,28 @@ class MySocketClient
             if (sender > 0) Console.WriteLine($"message has been sent. (message: {msg})");
 
             #region Receiver
-            var buffer = new byte[128]; // cuz we all know message has been encoded in bytes, store msg from receiver
-            var receiver = await client.ReceiveAsync(buffer, SocketFlags.None); // get an ecoding message from sender
-            /*should not use Receive(), it's a blocking call, if there is no available data, Receive() will block until data is available*/
-            var decoder = Encoding.UTF8.GetString(buffer, 0, receiver); // decode buffer, index 0, how many bytes we have to decode
+            try
+            {
+                var buffer = new byte[128]; // cuz we all know message has been encoded in bytes, store msg from receiver
+                var receiver = await client.ReceiveAsync(buffer, SocketFlags.None); // get an ecoding message from sender
+                /*should not use Receive(), it's a blocking call, if there is no available data, Receive() will block until data is available*/
+                var decoder = Encoding.UTF8.GetString(buffer, 0, receiver); // decode buffer, index 0, how many bytes we have to decode
+                var msgArray = decoder.Split("$");
+                
+                if(msgArray.Length >= 3)
+                {
+                    if (msgArray[0] == "Ack")
+                        Console.WriteLine(msgArray[2]); // acknowledge from server
+                    else if (msgArray[0] == "Msg")
+                        Console.WriteLine(msgArray[1] + " said: " + msgArray[2]);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Client receive error: {ex.Message}");
+                break;
+            }
             #endregion
-
-            Console.WriteLine(decoder); // acknowledge from server
 
             if (msg == "end") break;
         }
